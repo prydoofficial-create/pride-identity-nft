@@ -4,6 +4,7 @@ import {
   Crown,
   ExternalLink,
   Hexagon,
+  Loader2,
   Shield,
   Star,
   User,
@@ -17,6 +18,7 @@ import { useActor } from "../hooks/useActor";
 import { generateTraits } from "./AvatarBuilder";
 import AvatarBuilder from "./AvatarBuilder";
 import PrydoBadge from "./PrydoBadge";
+import PrydoIDCard from "./PrydoIDCard";
 
 const walletLabels: Record<string, string> = {
   metamask: "MetaMask",
@@ -174,11 +176,14 @@ export default function ProfilePanel() {
                     </div>
                     <div className="flex items-center gap-1.5 mt-1">
                       <span
-                        className="w-1.5 h-1.5 rounded-full bg-green-400"
-                        style={{ boxShadow: "0 0 5px #22C55E" }}
+                        className="w-1.5 h-1.5 rounded-full bg-cyan-400"
+                        style={{ boxShadow: "0 0 5px #29ABE2" }}
                       />
-                      <span className="text-white/40 text-xs">
-                        Polygon Chain
+                      <span
+                        className="text-[11px] font-medium"
+                        style={{ color: "#29ABE2" }}
+                      >
+                        ICP Network
                       </span>
                     </div>
                   </div>
@@ -193,6 +198,7 @@ export default function ProfilePanel() {
                   address={address}
                   onChainRecord={onChainRecord}
                   isFetchingOnChain={isFetchingOnChain}
+                  hasMinted={hasMinted}
                 />
               ) : (
                 <EmptyState onMintClick={handleMintCTA} />
@@ -267,18 +273,180 @@ export default function ProfilePanel() {
   );
 }
 
+function IcpVerificationCard({
+  address,
+  onChainRecord,
+  isFetchingOnChain,
+  hasMinted,
+}: {
+  address: string | null;
+  onChainRecord: PrydoIdWithPhoto | null;
+  isFetchingOnChain: boolean;
+  hasMinted: boolean;
+}) {
+  const shortId = address ? `#${address.slice(2, 8).toUpperCase()}` : "#------";
+
+  const mintedAt = onChainRecord?.idRecord?.timestamp
+    ? new Date(
+        Number(onChainRecord.idRecord.timestamp) / 1_000_000,
+      ).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      })
+    : null;
+
+  if (isFetchingOnChain) {
+    return (
+      <div
+        className="rounded-xl p-4"
+        style={{
+          background: "rgba(41,171,226,0.05)",
+          border: "1px solid rgba(41,171,226,0.2)",
+        }}
+        data-ocid="profile.loading_state"
+      >
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-sm">🔗</span>
+          <span className="text-xs font-bold text-white/60 uppercase tracking-widest">
+            ICP Mint Verification
+          </span>
+        </div>
+        <div className="flex flex-col gap-2">
+          <Skeleton
+            className="h-3 w-full rounded-full"
+            style={{ background: "rgba(41,171,226,0.1)" }}
+          />
+          <Skeleton
+            className="h-3 w-3/4 rounded-full"
+            style={{ background: "rgba(41,171,226,0.08)" }}
+          />
+          <Skeleton
+            className="h-3 w-1/2 rounded-full"
+            style={{ background: "rgba(41,171,226,0.06)" }}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  if (!onChainRecord && hasMinted) {
+    return (
+      <div
+        className="rounded-xl p-4"
+        style={{
+          background: "rgba(41,171,226,0.05)",
+          border: "1px solid rgba(41,171,226,0.2)",
+        }}
+        data-ocid="profile.loading_state"
+      >
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-sm">🔗</span>
+          <span className="text-xs font-bold text-white/60 uppercase tracking-widest">
+            ICP Mint Verification
+          </span>
+        </div>
+        <div className="flex items-center gap-2" style={{ color: "#29ABE2" }}>
+          <Loader2 className="w-4 h-4 animate-spin" />
+          <span className="text-xs font-medium">Verifying on ICP...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!onChainRecord) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.2 }}
+      className="rounded-xl p-4"
+      style={{
+        background: "rgba(41,171,226,0.06)",
+        border: "1px solid rgba(41,171,226,0.3)",
+        boxShadow: "0 0 20px rgba(41,171,226,0.08)",
+      }}
+      data-ocid="profile.success_state"
+    >
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-sm">🔗</span>
+        <span
+          className="text-xs font-bold uppercase tracking-widest"
+          style={{ color: "#29ABE2" }}
+        >
+          ICP Mint Verification
+        </span>
+      </div>
+
+      <div className="flex flex-col gap-2 text-xs">
+        <div className="flex items-center justify-between">
+          <span className="text-white/50">Status</span>
+          <span className="font-semibold text-green-400 flex items-center gap-1">
+            <span>✅</span> Confirmed on ICP
+          </span>
+        </div>
+        {mintedAt && (
+          <div className="flex items-center justify-between">
+            <span className="text-white/50">Minted</span>
+            <span className="text-white/80 font-medium">{mintedAt}</span>
+          </div>
+        )}
+        <div className="flex items-center justify-between">
+          <span className="text-white/50">Chain</span>
+          <span className="font-medium" style={{ color: "#29ABE2" }}>
+            Internet Computer (ICP)
+          </span>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-white/50">Record ID</span>
+          <span className="font-mono text-white/70">{shortId}</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-white/50">Storage</span>
+          <span className="text-white/70">IPFS + ICP Canister</span>
+        </div>
+      </div>
+
+      <div
+        className="mt-3 pt-3"
+        style={{ borderTop: "1px solid rgba(41,171,226,0.15)" }}
+      >
+        <a
+          href="https://dashboard.internetcomputer.org/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-1.5 w-full py-2 rounded-lg text-xs font-semibold transition-all hover:opacity-80"
+          style={{
+            background: "rgba(41,171,226,0.12)",
+            border: "1px solid rgba(41,171,226,0.3)",
+            color: "#29ABE2",
+          }}
+          data-ocid="profile.link"
+        >
+          View on ICP Explorer
+          <ExternalLink className="w-3 h-3" />
+        </a>
+      </div>
+    </motion.div>
+  );
+}
+
 function MintedCard({
   identityType,
   address,
   onChainRecord,
   isFetchingOnChain,
+  hasMinted,
 }: {
   identityType: "avatar" | "realface" | null;
   address: string | null;
   onChainRecord: PrydoIdWithPhoto | null;
   isFetchingOnChain: boolean;
+  hasMinted: boolean;
 }) {
-  const { faceImageUrl } = useWallet();
+  const { faceImageUrl, selectedAvatarDataUrl, selectedAvatarCategory } =
+    useWallet();
   const onChainPhotoUrl = onChainRecord?.photo?.getDirectURL() ?? null;
   const mintedAt = onChainRecord?.idRecord?.timestamp
     ? new Date(
@@ -295,7 +463,28 @@ function MintedCard({
   const faceUrl = onChainPhotoUrl ?? faceImageUrl;
 
   const artNode =
-    identityType === "avatar" ? (
+    identityType === "avatar" && selectedAvatarDataUrl ? (
+      <div
+        style={{
+          width: "200px",
+          height: "200px",
+          borderRadius: "50%",
+          overflow: "hidden",
+          boxShadow: "0 0 24px 6px rgba(139, 92, 246, 0.7)",
+          border: "3px solid rgba(139, 92, 246, 0.8)",
+        }}
+      >
+        <img
+          src={selectedAvatarDataUrl}
+          alt={
+            selectedAvatarCategory
+              ? `${selectedAvatarCategory} Avatar`
+              : "LGBTQ+ Avatar"
+          }
+          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+        />
+      </div>
+    ) : identityType === "avatar" ? (
       <AvatarBuilder seed={seed} size={200} isGenesis={true} />
     ) : identityType === "realface" && faceUrl ? (
       <div
@@ -375,18 +564,47 @@ function MintedCard({
           )}
         </div>
       )}
-      {/* PrydoBadge replaces NFTCard */}
+      {/* Prydo ID Card */}
+      <PrydoIDCard
+        name={
+          identityType === "realface"
+            ? "Real Face Identity"
+            : selectedAvatarCategory
+              ? `${selectedAvatarCategory.charAt(0).toUpperCase() + selectedAvatarCategory.slice(1)} Genesis`
+              : "Genesis Member"
+        }
+        prydoId={
+          address
+            ? `#PRYDO-${address.slice(2, 8).toUpperCase()}`
+            : "#PRYDO-0001"
+        }
+        tier="Genesis"
+        category={selectedAvatarCategory ?? undefined}
+      />
+      {/* PrydoBadge */}
       <div style={{ paddingTop: 32 }}>
         <PrydoBadge
           variant="genesis"
           name={
             identityType === "realface"
               ? "Real Face Identity"
-              : `${traits.hairStyle} Genesis`
+              : selectedAvatarCategory
+                ? `${selectedAvatarCategory.charAt(0).toUpperCase() + selectedAvatarCategory.slice(1)} Genesis`
+                : `${traits.hairStyle} Genesis`
           }
           pronouns="They/Them"
           avatarContent={artNode}
           votingPower={150}
+        />
+      </div>
+
+      {/* ICP Mint Verification */}
+      <div className="w-full">
+        <IcpVerificationCard
+          address={address}
+          onChainRecord={onChainRecord}
+          isFetchingOnChain={isFetchingOnChain}
+          hasMinted={hasMinted}
         />
       </div>
     </motion.div>
